@@ -44,8 +44,14 @@ public class AuthServiceImpl implements AuthService {
                 .authenticate(new UsernamePasswordAuthenticationToken(request.getUsername(), request.getPassword()));
         Users user = userRepository.findByUsername(request.getUsername()).orElseThrow();
         java.util.Set<String> roles = user.getRoles() == null ? java.util.Collections.emptySet()
-                : user.getRoles().stream().map(Roles::getRole).collect(java.util.stream.Collectors.toSet());
-        String token = jwtUtil.generateToken(user.getUsername(), roles);
+            : user.getRoles().stream().map(Roles::getRole).collect(java.util.stream.Collectors.toSet());
+        java.util.Set<String> permissions = user.getRoles() == null ? java.util.Collections.emptySet() :
+            user.getRoles().stream()
+                .filter(r -> r.getPermissions() != null)
+                .flatMap(r -> r.getPermissions().stream())
+                .map(com.auth.service.model.Permission::getPermission)
+                .collect(java.util.stream.Collectors.toSet());
+        String token = jwtUtil.generateToken(user.getUsername(), roles, permissions);
         return new AuthResponse(token);
     }
 

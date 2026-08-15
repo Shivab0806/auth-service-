@@ -39,7 +39,11 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
         if (username != null && SecurityContextHolder.getContext().getAuthentication() == null) {
             if (jwtUtil.validateToken(token)) {
                 java.util.Set<String> roles = jwtUtil.extractRoles(token);
-                java.util.List<org.springframework.security.core.GrantedAuthority> authorities = roles.stream().map(org.springframework.security.core.authority.SimpleGrantedAuthority::new).collect(java.util.stream.Collectors.toList());
+                java.util.Set<String> perms = jwtUtil.extractPermissions(token);
+                java.util.List<org.springframework.security.core.GrantedAuthority> authorities = new java.util.ArrayList<>();
+                roles.stream().map(org.springframework.security.core.authority.SimpleGrantedAuthority::new).forEach(authorities::add);
+                // add permission authorities
+                perms.stream().map(org.springframework.security.core.authority.SimpleGrantedAuthority::new).forEach(authorities::add);
                 // attempt to get user details to check enabled status; fallback if not available
                 try {
                     UserDetails userDetails = userDetailsService.loadUserByUsername(username);
